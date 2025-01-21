@@ -148,9 +148,9 @@ name = "pointer-io-rssfeed"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "attrs" },
     { name = "beautifulsoup4" },
     { name = "httpx" },
-    { name = "pyrss2gen" },
     { name = "trio" },
 ]
 
@@ -163,9 +163,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "attrs", specifier = ">=24.3.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pyrss2gen", specifier = ">=1.1" },
     { name = "trio", specifier = ">=0.28.0" },
 ]
 
@@ -184,12 +184,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca98883
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552 },
 ]
-
-[[package]]
-name = "pyrss2gen"
-version = "1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6d/01/fd610d5fc86f7dbdbefc4baa8f7fe15a2e5484244c41dcf363ca7e89f60c/PyRSS2Gen-1.1.tar.gz", hash = "sha256:7960aed7e998d2482bf58716c316509786f596426f879b05f8d84e98b82c6ee7", size = 6854 }
 
 [[package]]
 name = "ruff"

@@ -3,24 +3,40 @@ import logging
 import logging.config
 import os
 import sys
+import xml.etree.ElementTree as ET
+import zoneinfo
 
 import bs4
 import httpx
-
-# Consider replacing PyRSS2Gen w/ a custom RSS module. I can't find a good OSS lib.
-import PyRSS2Gen  # type: ignore[import-untyped]
 import trio
 
-_BASE_URL = "https://www.pointer.io/"
+from pointer_io_rssfeed import rss
+
+_BASE_URL = httpx.URL("https://www.pointer.io/")
 _LOGGER = logging.getLogger(__name__)
+_NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
 
 
-def _article_tag_to_rss_item(article_tag: bs4.Tag) -> PyRSS2Gen.RSSItem:
-    # TODO: fetch and include article body
-    return PyRSS2Gen.RSSItem(
-        title=article_tag.find("h2").text.strip(),
-        link=article_tag.get("href"),
-        pubDate=article_tag.find("time").text.strip(),
+def _article_tag_to_rss_item(article_tag: bs4.Tag) -> rss.Item:
+    h2 = article_tag.find("h2")
+    assert isinstance(h2, bs4.Tag)
+    href = article_tag.get("href")
+    assert isinstance(href, str)
+    time = article_tag.find("time")
+    assert isinstance(time, bs4.Tag)
+
+    # consider fetching and including article body
+
+    pub_date = datetime.datetime.strptime(time.text.strip(), "%B %d, %Y").replace(
+        # Pointer is typically released around 9am NY time
+        hour=9,
+        tzinfo=_NY_ZONE_INFO,
+    )
+
+    return rss.Item(
+        title=h2.text.strip(),
+        link=rss.URL(str(_BASE_URL.join(href))),
+        pub_date=pub_date,
     )
 
 
@@ -36,8 +52,7 @@ def main() -> None:
     _configure_logging()
 
     async def _main() -> None:
-        base_url = httpx.URL(_BASE_URL)
-        async with httpx.AsyncClient(base_url=base_url) as client:
+        async with httpx.AsyncClient(base_url=_BASE_URL) as client:
             _LOGGER.info("Get archives")
             resp = (await client.get("/archives/")).raise_for_status()
             _LOGGER.info("Parse response")
@@ -48,20 +63,22 @@ def main() -> None:
         _LOGGER.info("Got %s articles", len(rss_items))
 
         _LOGGER.info("Building RSS Feed")
-        rss = PyRSS2Gen.RSS2(
+        rss_doc = rss.Feed(
             title="Pointer",
-            link=_BASE_URL,
-            image=PyRSS2Gen.Image(
-                url="https://www.pointer.io/static/apple-touch-icon.png", title="Pointer", link=_BASE_URL
+            link=rss.URL(str(_BASE_URL)),
+            image=rss.Image(
+                url=rss.URL("https://www.pointer.io/static/apple-touch-icon.png"),
+                title="Pointer",
+                link=rss.URL(str(_BASE_URL)),
             ),
             description="EssentialEssential Reading For Engineering Leaders",
-            lastBuildDate=datetime.datetime.now(tz=datetime.UTC),
+            last_build_date=datetime.datetime.now(tz=datetime.UTC),
             items=rss_items,
         )
 
         # output RSS Feed to stdout
         _LOGGER.info("Writing RSS feed")
-        rss.write_xml(sys.stdout)
+        ET.ElementTree(rss_doc.to_xml()).write(sys.stdout, encoding="unicode")
 
     trio.run(_main)
 
