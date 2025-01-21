@@ -1,0 +1,61 @@
+name: "update rss"
+
+on:
+  schedule:
+    # https://crontab.guru/#0_0_*_*_*
+    # At 00:00 (UTC)
+    - cron: "0 0 * * *"
+  workflow_dispatch: # allow manually running
+    inputs:
+      log_level:
+        type: choice
+        options:
+          - NOTSET
+          - DEBUG
+          - INFO
+          - WARNING
+          - ERROR
+        default: INFO
+
+# ensure at most one publish job runs at a time
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: astral-sh/setup-uv@v5.2.1
+        with:
+          enable-cache: true
+          version: "0.5.21"
+      - name: build rss feed
+        env:
+          LOG_LEVEL: ${{ inputs.log_level }}
+        run: |
+          mkdir _site
+          uv run pointer-io-rssfeed > _site/feed.xml
+      - name: Upload static files as artifact
+        uses: actions/upload-pages-artifact@v3.0.1
+        id: deployment
+        with:
+          path: _site/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4.0.5
+        id: deployment
