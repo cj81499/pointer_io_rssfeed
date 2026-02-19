@@ -5,6 +5,7 @@ on:
     # https://crontab.guru/#0_0_*_*_*
     # At 00:00 (UTC)
     - cron: "0 0 * * *"
+
   workflow_dispatch: # allow manually running
     inputs:
       log_level:
@@ -16,6 +17,9 @@ on:
           - WARNING
           - ERROR
         default: INFO
+      publish:
+        type: boolean
+        default: false
 
 # ensure at most one publish job runs at a time
 concurrency:
@@ -30,23 +34,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+
       - uses: astral-sh/setup-uv@v5.2.1
         with:
           enable-cache: true
-          version: "0.5.21"
+
+      - name: Restore pointer HTML cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/pointer
+          key: pointer-html-v1-${{ runner.os }}
+          restore-keys: |
+            pointer-html-v1-
+
       - name: build rss feed
         env:
           LOG_LEVEL: ${{ inputs.log_level }}
         run: |
           mkdir _site
           uv run pointer-io-rssfeed > _site/feed.xml
+
       - name: Upload static files as artifact
+        if: ${{ inputs.publish }}
         uses: actions/upload-pages-artifact@v3.0.1
         id: deployment
         with:
           path: _site/
 
   deploy:
+    if: ${{ inputs.publish }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
