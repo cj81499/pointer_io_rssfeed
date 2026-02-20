@@ -1,7 +1,7 @@
 import datetime
+import enum
 import logging
 import logging.config
-import os
 import sys
 import xml.etree.ElementTree as ET
 import zoneinfo
@@ -16,6 +16,14 @@ from pointer_io_rssfeed import rss
 _BASE_URL = httpx.URL("https://www.pointer.io/")
 _LOGGER = logging.getLogger(__name__)
 _NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
+
+
+class _LogLevel(enum.StrEnum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 async def _article_tag_to_rss_item(
@@ -84,23 +92,44 @@ def _html_to_description(html: str) -> str:
     return str(soup.find("tr", id="content-blocks"))
 
 
-@click.command()
+@click.command(
+    context_settings={
+        "help_option_names": ["-h", "--help"],
+        "max_content_width": 120,
+    }
+)
 @click.option(
     "--max-concurrency",
     type=click.IntRange(min=1),
     default=5,
     show_default=True,
-    envvar="POINTER_MAX_CONCURRENCY",
+    envvar="MAX_CONCURRENCY",
+    show_envvar=True,
 )
 @click.option(
     "--cache-dir",
     type=click.Path(path_type=trio.Path),
     default=trio.Path(".cache/pointer"),
     show_default=True,
-    envvar="POINTER_CACHE_DIR",
+    envvar="CACHE_DIR",
+    show_envvar=True,
 )
-def main(*, max_concurrency: int, cache_dir: trio.Path) -> None:
-    _configure_logging()
+@click.option(
+    "--log-level",
+    type=click.Choice(_LogLevel, case_sensitive=False),
+    default="INFO",
+    show_default=True,
+    envvar="LOG_LEVEL",
+    show_envvar=True,
+)
+@click.version_option()
+def main(
+    *,
+    max_concurrency: int,
+    cache_dir: trio.Path,
+    log_level: _LogLevel,
+) -> None:
+    _configure_logging(log_level=log_level)
 
     async def _main() -> None:
         async with httpx.AsyncClient(
@@ -140,7 +169,7 @@ def main(*, max_concurrency: int, cache_dir: trio.Path) -> None:
             ),
             description="Essential Reading For Engineering Leaders",
             last_build_date=datetime.datetime.now(tz=datetime.UTC),
-            items=rss_items,
+            items=sorted(rss_items, key=lambda item: item.pub_date),
         )
 
         # output RSS Feed to stdout
@@ -150,7 +179,7 @@ def main(*, max_concurrency: int, cache_dir: trio.Path) -> None:
     trio.run(_main)
 
 
-def _configure_logging() -> None:
+def _configure_logging(*, log_level: _LogLevel) -> None:
     logging.config.dictConfig(
         {
             "version": 1,
@@ -169,7 +198,7 @@ def _configure_logging() -> None:
                 }
             },
             "root": {
-                "level": os.getenv("LOG_LEVEL") or "INFO",
+                "level": log_level,
                 "handlers": ["stderr"],
             },
             "loggers": {},
