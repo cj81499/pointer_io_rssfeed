@@ -1,11 +1,34 @@
 # Pointer.io RSS Feed
 
-Previously, Pointer had a RSS feed available at https://www.pointer.io/rss/.
+Previously, Pointer had a RSS feed available at <https://www.pointer.io/rss/>.
 It stopped working at some point (May 2024 I think?).
 
 It was last captured by the internet archive in Dec 2023
-(https://web.archive.org/web/20231202210100/https://www.pointer.io/rss/).
+(<https://web.archive.org/web/20231202210100/https://www.pointer.io/rss/>).
 
-This project scrapes https://www.pointer.io/archives/ (1x daily) and outputs
-a RSS feed. For now, each item in the feed contains only the title (issue number),
-a link to the full article, and the date when the article was published.
+This project scrapes <https://www.pointer.io/archives/> (1x daily) and outputs
+a RSS feed.
+
+Each RSS item includes:
+
+- the issue title (e.g. "Issue #691")
+- a link to the archive page
+- the publication date
+- a `<description>` containing HTML from the archive page
+
+The generator fetches archive pages concurrently (bounded by `--max-concurrency`) and caches
+fetched HTML in a local directory so subsequent runs avoid re-downloading the same pages.
+
+## Usage
+
+```bash
+uv run pointer-io-rssfeed > feed.xml
+```
+
+### Options
+
+```bash
+uv run pointer-io-rssfeed --help
+```
+
+Options can also be set via environment variables:
