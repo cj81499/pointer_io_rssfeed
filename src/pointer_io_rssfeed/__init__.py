@@ -1,12 +1,13 @@
 import datetime
+import enum
 import logging
 import logging.config
-import os
 import sys
 import xml.etree.ElementTree as ET
 import zoneinfo
 
 import bs4
+import click
 import httpx
 import trio
 
@@ -17,7 +18,17 @@ _LOGGER = logging.getLogger(__name__)
 _NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
 
 
-def _article_tag_to_rss_item(article_tag: bs4.Tag) -> rss.Item:
+class _LogLevel(enum.StrEnum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+
+async def _article_tag_to_rss_item(
+    *, article_tag: bs4.Tag, client: httpx.AsyncClient, cache_dir: trio.Path
+) -> rss.Item:
     h2 = article_tag.find("h2")
     assert isinstance(h2, bs4.Tag)
     href = article_tag.get("href")
@@ -25,18 +36,20 @@ def _article_tag_to_rss_item(article_tag: bs4.Tag) -> rss.Item:
     time = article_tag.find("time")
     assert isinstance(time, bs4.Tag)
 
-    # consider fetching and including article body
-
     pub_date = datetime.datetime.strptime(time.text.strip(), "%B %d, %Y").replace(
         # Pointer is typically released around 9am NY time
         hour=9,
         tzinfo=_NY_ZONE_INFO,
     )
 
+    html = await _fetch_archive_html(client=client, href=href, cache_dir=cache_dir)
+    description = _html_to_description(html)
+
     return rss.Item(
         title=h2.text.strip(),
         link=rss.URL(str(_BASE_URL.join(href))),
         pub_date=pub_date,
+        description=description,
     )
 
 
@@ -48,18 +61,101 @@ def _is_article_tag(tag: bs4.Tag) -> bool:
     return href.startswith("/archives/")
 
 
-def main() -> None:
-    _configure_logging()
+def _post_id_from_href(href: str) -> str:
+    return href.rstrip("/").split("/")[-1]
+
+
+async def _fetch_archive_html(*, client: httpx.AsyncClient, href: str, cache_dir: trio.Path) -> str:
+    post_id = _post_id_from_href(href)
+    cache_path = cache_dir / f"{post_id}.html"
+
+    if await cache_path.exists():
+        _LOGGER.debug("Cache hit. post_id=%s", post_id)
+        return await cache_path.read_text()
+
+    _LOGGER.debug("Cache miss. Fetching. post_id=%s", post_id)
+    resp = (await client.get(href)).raise_for_status()
+    html = resp.text
+
+    await cache_dir.mkdir(parents=True, exist_ok=True)
+    await cache_path.write_text(html)
+
+    return html
+
+
+def _html_to_description(html: str) -> str:
+    soup = bs4.BeautifulSoup(html, features="html.parser")
+
+    # TODO: remove stuff after "Notable links"
+    # TODO: remove ads
+    # TODO: remove header eg: "Friday 5th December issue is presented by Augment Code"
+    return str(soup.find("tr", id="content-blocks"))
+
+
+@click.command(
+    context_settings={
+        "help_option_names": ["-h", "--help"],
+        "max_content_width": 120,
+    }
+)
+@click.option(
+    "--max-concurrency",
+    type=click.IntRange(min=1),
+    default=5,
+    show_default=True,
+    envvar="MAX_CONCURRENCY",
+    show_envvar=True,
+)
+@click.option(
+    "--cache-dir",
+    type=click.Path(path_type=trio.Path),
+    default=trio.Path(".cache/pointer"),
+    show_default=True,
+    envvar="CACHE_DIR",
+    show_envvar=True,
+)
+@click.option(
+    "--log-level",
+    type=click.Choice(_LogLevel, case_sensitive=False),
+    default="INFO",
+    show_default=True,
+    envvar="LOG_LEVEL",
+    show_envvar=True,
+)
+@click.version_option()
+def main(
+    *,
+    max_concurrency: int,
+    cache_dir: trio.Path,
+    log_level: _LogLevel,
+) -> None:
+    _configure_logging(log_level=log_level)
 
     async def _main() -> None:
-        async with httpx.AsyncClient(base_url=_BASE_URL) as client:
+        async with httpx.AsyncClient(
+            base_url=_BASE_URL,
+            follow_redirects=True,
+            timeout=httpx.Timeout(30),
+        ) as client:
             _LOGGER.info("Get archives")
             resp = (await client.get("/archives/")).raise_for_status()
             _LOGGER.info("Parse response")
             soup = bs4.BeautifulSoup(resp.content, features="html.parser")
             article_tags = [a for a in soup.find_all("a") if isinstance(a, bs4.Tag) and _is_article_tag(a)]
-            _LOGGER.info("Found %s article_tags", len(article_tags))
-            rss_items = list(map(_article_tag_to_rss_item, article_tags))
+
+            sem = trio.Semaphore(max_concurrency)
+            rss_items: list[rss.Item] = []
+
+            async def _worker(article_tag: bs4.Tag) -> None:
+                async with sem:
+                    item = await _article_tag_to_rss_item(article_tag=article_tag, client=client, cache_dir=cache_dir)
+                rss_items.append(item)
+
+            _LOGGER.info("Fetching %s articles", len(article_tags))
+            async with trio.open_nursery() as nursery:
+                for tag in article_tags:
+                    nursery.start_soon(_worker, tag)
+
         _LOGGER.info("Got %s articles", len(rss_items))
 
         _LOGGER.info("Building RSS Feed")
@@ -71,9 +167,9 @@ def main() -> None:
                 title="Pointer",
                 link=rss.URL(str(_BASE_URL)),
             ),
-            description="EssentialEssential Reading For Engineering Leaders",
+            description="Essential Reading For Engineering Leaders",
             last_build_date=datetime.datetime.now(tz=datetime.UTC),
-            items=rss_items,
+            items=sorted(rss_items, key=lambda item: item.pub_date),
         )
 
         # output RSS Feed to stdout
@@ -83,7 +179,7 @@ def main() -> None:
     trio.run(_main)
 
 
-def _configure_logging() -> None:
+def _configure_logging(*, log_level: _LogLevel) -> None:
     logging.config.dictConfig(
         {
             "version": 1,
@@ -102,7 +198,7 @@ def _configure_logging() -> None:
                 }
             },
             "root": {
-                "level": os.getenv("LOG_LEVEL") or "INFO",
+                "level": log_level,
                 "handlers": ["stderr"],
             },
             "loggers": {},
