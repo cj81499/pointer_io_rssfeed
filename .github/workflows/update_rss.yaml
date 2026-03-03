@@ -62,7 +62,8 @@ jobs:
           path: _site/
 
   deploy:
-    if: ${{ inputs.publish }}
+    # deploy if running on schedule or the publish flag is set
+    if: ${{ github.event_name == 'schedule' || inputs.publish == true }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
