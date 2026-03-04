@@ -55,7 +55,7 @@ jobs:
           uv run pointer-io-rssfeed > _site/feed.xml
 
       - name: Upload static files as artifact
-        if: ${{ inputs.publish }}
+        if: ${{ github.event_name == 'schedule' || inputs.publish == true }}
         uses: actions/upload-pages-artifact@v3.0.1
         id: deployment
         with:
