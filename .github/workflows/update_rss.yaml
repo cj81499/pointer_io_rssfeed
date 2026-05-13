@@ -21,6 +21,8 @@ on:
         type: boolean
         default: false
 
+permissions: {}
+
 # ensure at most one publish job runs at a time
 concurrency:
   group: ${{ github.workflow }}
