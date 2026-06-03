@@ -19,6 +19,7 @@ _NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
 
 
 class _LogLevel(enum.StrEnum):
+    NOTSET = "NOTSET"
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -132,29 +133,35 @@ def main(
     _configure_logging(log_level=log_level)
 
     async def _main() -> None:
-        async with httpx.AsyncClient(
-            base_url=_BASE_URL,
-            follow_redirects=True,
-            timeout=httpx.Timeout(30),
-        ) as client:
-            _LOGGER.info("Get archives")
-            resp = (await client.get("/archives/")).raise_for_status()
-            _LOGGER.info("Parse response")
-            soup = bs4.BeautifulSoup(resp.content, features="html.parser")
-            article_tags = [a for a in soup.find_all("a") if isinstance(a, bs4.Tag) and _is_article_tag(a)]
+        try:
+            async with httpx.AsyncClient(
+                base_url=_BASE_URL,
+                follow_redirects=True,
+                timeout=httpx.Timeout(30),
+            ) as client:
+                _LOGGER.info("Get archives")
+                resp = (await client.get("/archives/")).raise_for_status()
+                _LOGGER.info("Parse response")
+                soup = bs4.BeautifulSoup(resp.content, features="html.parser")
+                article_tags = [a for a in soup.find_all("a") if isinstance(a, bs4.Tag) and _is_article_tag(a)]
 
-            sem = trio.Semaphore(max_concurrency)
-            rss_items: list[rss.Item] = []
+                sem = trio.Semaphore(max_concurrency)
+                rss_items: list[rss.Item] = []
 
-            async def _worker(article_tag: bs4.Tag) -> None:
-                async with sem:
-                    item = await _article_tag_to_rss_item(article_tag=article_tag, client=client, cache_dir=cache_dir)
-                rss_items.append(item)
+                async def _worker(article_tag: bs4.Tag) -> None:
+                    async with sem:
+                        item = await _article_tag_to_rss_item(
+                            article_tag=article_tag, client=client, cache_dir=cache_dir
+                        )
+                    rss_items.append(item)
 
-            _LOGGER.info("Fetching %s articles", len(article_tags))
-            async with trio.open_nursery() as nursery:
-                for tag in article_tags:
-                    nursery.start_soon(_worker, tag)
+                _LOGGER.info("Fetching %s articles", len(article_tags))
+                async with trio.open_nursery() as nursery:
+                    for tag in article_tags:
+                        nursery.start_soon(_worker, tag)
+        except httpx.HTTPStatusError as e:
+            _LOGGER.exception("HTTP failure. HTTP response content: %s", e.response.content)
+            raise SystemExit(1) from e
 
         _LOGGER.info("Got %s articles", len(rss_items))
 
