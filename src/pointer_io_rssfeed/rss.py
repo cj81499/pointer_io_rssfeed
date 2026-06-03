@@ -1,9 +1,11 @@
-import datetime
 import email.utils
 import xml.etree.ElementTree as ET
-from typing import NewType, Protocol
+from typing import TYPE_CHECKING, NewType, Protocol
 
 import attrs
+
+if TYPE_CHECKING:
+    import datetime
 
 URL = NewType("URL", str)
 

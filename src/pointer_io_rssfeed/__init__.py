@@ -11,7 +11,7 @@ import click
 import httpx
 import trio
 
-from pointer_io_rssfeed import rss
+from pointer_io_rssfeed import cleanup, rss
 
 _BASE_URL = httpx.URL("https://www.pointer.io/")
 _LOGGER = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ async def _article_tag_to_rss_item(
     )
 
     html = await _fetch_archive_html(client=client, href=href, cache_dir=cache_dir)
-    description = _html_to_description(html)
+    description = cleanup.html_to_description(html)
 
     return rss.Item(
         title=h2.text.strip(),
@@ -84,13 +84,9 @@ async def _fetch_archive_html(*, client: httpx.AsyncClient, href: str, cache_dir
     return html
 
 
-def _html_to_description(html: str) -> str:
-    soup = bs4.BeautifulSoup(html, features="html.parser")
-
-    # TODO: remove stuff after "Notable links"
-    # TODO: remove ads
-    # TODO: remove header eg: "Friday 5th December issue is presented by Augment Code"
-    return str(soup.find("tr", id="content-blocks"))
+def _item_pub_date(item: rss.Item) -> datetime.datetime:
+    assert item.pub_date is not None
+    return item.pub_date
 
 
 @click.command(
@@ -176,7 +172,7 @@ def main(
             ),
             description="Essential Reading For Engineering Leaders",
             last_build_date=datetime.datetime.now(tz=datetime.UTC),
-            items=sorted(rss_items, key=lambda item: item.pub_date),
+            items=sorted(rss_items, key=_item_pub_date),
         )
 
         # output RSS Feed to stdout
