@@ -32,3 +32,7 @@ uv run pointer-io-rssfeed --help
 ```
 
 Options can also be set via environment variables:
+
+## Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for contributor and testing docs.
