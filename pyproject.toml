@@ -21,7 +21,9 @@ pointer-io-rssfeed = "pointer_io_rssfeed:main"
 [dependency-groups]
 dev = [
   "mypy",
+  "pytest>=9.0.3",
   "ruff",
+  "syrupy>=5.2.0",
   "types-beautifulsoup4",
 ]
 
@@ -31,6 +33,10 @@ build-backend = "uv_build"
 
 [tool.mypy]
 strict = true
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
@@ -45,4 +51,10 @@ ignore = [
   "FIX002",
   "TD002",
   "TD003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "INP001",  # tests/ doesn't need __init__.py
+  "PLR2004",  # magic values are fine in tests
 ]
