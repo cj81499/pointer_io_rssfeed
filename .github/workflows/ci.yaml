@@ -1,0 +1,38 @@
+name: "ci"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: {}
+
+env:
+  FORCE_COLOR: 1
+  # prevent `uv run` from implicitly re-syncing the environment, which would
+  # reinstall the project in editable mode and defeat `uv sync --no-editable`
+  UV_NO_SYNC: 1
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+
+      # --no-editable tests against the built/installed package (not the
+      # source checkout) to catch packaging glitches (see also UV_NO_SYNC above)
+      - run: uv sync --no-editable --all-groups
+
+      - run: uv run ruff check
+
+      - run: uv run ruff format --check
+
+      - run: uv run mypy .
+
+      - run: uv run pytest
