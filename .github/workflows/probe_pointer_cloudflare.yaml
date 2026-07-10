@@ -77,22 +77,28 @@ jobs:
       - name: Probe Chromium browser navigation
         continue-on-error: true
         run: |
-          node - <<'NODE'
+          # Cloudflare's challenge page can keep background network activity
+          # open indefinitely, so do not wait for Playwright's network-idle
+          # condition. The outer timeout is a final guard for this diagnostic.
+          timeout 90s node - <<'NODE'
           const { chromium } = require("playwright");
 
           (async () => {
             const browser = await chromium.launch({ headless: true });
-            const page = await browser.newPage({ locale: "en-US" });
-            const response = await page.goto("https://www.pointer.io/archives/", {
-              timeout: 60_000,
-              waitUntil: "networkidle",
-            });
-            await page.waitForTimeout(5_000);
-            console.log(`initial_status=${response?.status()}`);
-            console.log(`final_url=${page.url()}`);
-            console.log(`archive_links=${await page.locator("a[href^='/archives/']").count()}`);
-            console.log(`challenge_text=${await page.getByText("Just a moment...").count()}`);
-            await browser.close();
+            try {
+              const page = await browser.newPage({ locale: "en-US" });
+              const response = await page.goto("https://www.pointer.io/archives/", {
+                timeout: 30_000,
+                waitUntil: "domcontentloaded",
+              });
+              await page.waitForTimeout(5_000);
+              console.log(`initial_status=${response?.status()}`);
+              console.log(`final_url=${page.url()}`);
+              console.log(`archive_links=${await page.locator("a[href^='/archives/']").count()}`);
+              console.log(`challenge_text=${await page.getByText("Just a moment...").count()}`);
+            } finally {
+              await browser.close();
+            }
           })().catch((error) => {
             console.error(error);
             process.exitCode = 1;
