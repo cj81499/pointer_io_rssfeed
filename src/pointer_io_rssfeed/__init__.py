@@ -17,6 +17,15 @@ _BASE_URL = httpx.URL("https://www.pointer.io/")
 _LOGGER = logging.getLogger(__name__)
 _NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
 
+# Browser-style headers avoid Pointer's Cloudflare managed challenge on GitHub Actions.
+_BROWSER_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+    ),
+}
+
 
 class _LogLevel(enum.StrEnum):
     NOTSET = "NOTSET"
@@ -133,6 +142,7 @@ def main(
             async with httpx.AsyncClient(
                 base_url=_BASE_URL,
                 follow_redirects=True,
+                headers=_BROWSER_HEADERS,
                 timeout=httpx.Timeout(30),
             ) as client:
                 _LOGGER.info("Get archives")
