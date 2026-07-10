@@ -21,14 +21,14 @@ pointer-io-rssfeed = "pointer_io_rssfeed:main"
 [dependency-groups]
 dev = [
   "mypy",
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "ruff",
-  "syrupy>=5.2.0",
+  "syrupy>=5.3.4",
   "types-beautifulsoup4",
 ]
 
 [build-system]
-requires = ["uv_build>=0.11.16,<0.12.0"]
+requires = ["uv_build>=0.11.25,<0.12.0"]
 build-backend = "uv_build"
 
 [tool.mypy]
