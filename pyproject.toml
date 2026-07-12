@@ -23,7 +23,7 @@ dev = [
   "mypy",
   "pytest>=9.1.1",
   "ruff",
-  "syrupy>=5.3.4",
+  "syrupy>=5.4.0",
   "types-beautifulsoup4",
 ]
 
