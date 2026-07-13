@@ -12,12 +12,21 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 _UNWANTED_TEXT = re.compile(
-    r"(?:"
-    r"\bpresented by\b|\bpromoted by\b|\bsponsored by\b|"
-    r"how did you like this issue|click the below and shoot me an email|"
-    r"\brate (?:or )?rank (?:this )?issue\b|\b(?:un)?subscribe\b"
-    r")",
-    re.IGNORECASE,
+    r"""
+    (?:
+        # Advertisements and sponsorships.
+        \b (?:presented|promoted|sponsored) [ ]by \b
+      | \# sponsored \b
+
+        # Reader-feedback prompts.
+      | how[ ]did[ ]you[ ]like[ ]this[ ]issue
+      | click[ ]the[ ]below[ ]and[ ]shoot[ ]me[ ]an[ ]email
+
+        # Pointer's email-list opt-out control.
+      | \b unsubscribe \b
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 _TRACKING_PARAMETERS = frozenset({"_bhlid", "aid"})
 _LAYOUT_TAGS = frozenset({"table", "tbody", "thead", "tfoot", "tr", "td", "th"})

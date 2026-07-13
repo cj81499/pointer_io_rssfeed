@@ -72,3 +72,32 @@ def test_html_to_description_removes_tracking_parameters_from_fragment_urls() ->
     assert 'href="https://example.com/article#section?keep=yes"' in description
     assert "aid=" not in description
     assert "_bhlid=" not in description
+
+
+def test_html_to_description_keeps_editorial_subscribe_calls_to_action() -> None:
+    description = cleanup.html_to_description(
+        "<html><body><p>Subscribe for a weekly roundup of engineering articles.</p></body></html>"
+    )
+
+    assert "Subscribe for a weekly roundup of engineering articles." in description
+
+
+def test_html_to_description_removes_unsubscribe_controls() -> None:
+    description = cleanup.html_to_description("<html><body><p>Unsubscribe from this list.</p></body></html>")
+
+    assert description == ""
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "This issue is presented by Example Corp.",
+        "This article is promoted by Example Corp.",
+        "This article is sponsored by Example Corp.",
+        "Find a job with Example Corp. #Sponsored",
+    ],
+)
+def test_html_to_description_removes_advertisement_labels(text: str) -> None:
+    description = cleanup.html_to_description(f"<html><body><p>{text}</p></body></html>")
+
+    assert description == ""
