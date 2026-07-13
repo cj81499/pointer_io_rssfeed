@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pointer-io-rssfeed = "pointer_io_rssfeed:main"
+pointer-io-rssfeed = "pointer_io_rssfeed.cli:main"
 
 [dependency-groups]
 dev = [
