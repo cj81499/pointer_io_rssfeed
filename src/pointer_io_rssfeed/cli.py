@@ -15,18 +15,8 @@ import trio
 
 from pointer_io_rssfeed import archive, cleanup, fetch, render, rss
 
-_BASE_URL = httpx.URL("https://www.pointer.io/")
 _LOGGER = logging.getLogger(__name__)
 _NY_ZONE_INFO = zoneinfo.ZoneInfo("America/New_York")
-
-# Browser-style headers avoid Pointer's Cloudflare managed challenge on GitHub Actions.
-_BROWSER_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
-    ),
-}
 
 
 class _LogLevel(enum.StrEnum):
@@ -42,13 +32,13 @@ class _LogLevel(enum.StrEnum):
     context_settings={
         "help_option_names": ["-h", "--help"],
         "max_content_width": 120,
+        "show_default": True,
     }
 )
 @click.option(
     "--max-concurrency",
     type=click.IntRange(min=1),
     default=5,
-    show_default=True,
     envvar="MAX_CONCURRENCY",
     show_envvar=True,
 )
@@ -56,7 +46,6 @@ class _LogLevel(enum.StrEnum):
     "--cache-dir",
     type=click.Path(path_type=trio.Path),
     default=trio.Path(".cache/pointer"),
-    show_default=True,
     envvar="CACHE_DIR",
     show_envvar=True,
 )
@@ -64,7 +53,6 @@ class _LogLevel(enum.StrEnum):
     "--log-level",
     type=click.Choice(_LogLevel, case_sensitive=False),
     default="INFO",
-    show_default=True,
     envvar="LOG_LEVEL",
     show_envvar=True,
 )
@@ -82,12 +70,7 @@ def main(
 
 async def _generate_feed(max_concurrency: int, cache_dir: trio.Path) -> None:
     try:
-        async with httpx.AsyncClient(
-            base_url=_BASE_URL,
-            follow_redirects=True,
-            headers=_BROWSER_HEADERS,
-            timeout=httpx.Timeout(30),
-        ) as client:
+        async with fetch.pointer_client() as client:
             _LOGGER.info("Get archives")
             response = (await client.get("/archives/")).raise_for_status()
             _LOGGER.info("Parse response")
@@ -113,11 +96,11 @@ async def _generate_feed(max_concurrency: int, cache_dir: trio.Path) -> None:
     _LOGGER.info("Building RSS Feed")
     feed = rss.Feed(
         title="Pointer",
-        link=rss.URL(str(_BASE_URL)),
+        link=rss.URL(str(fetch.BASE_URL)),
         image=rss.Image(
             url=rss.URL("https://www.pointer.io/static/apple-touch-icon.png"),
             title="Pointer",
-            link=rss.URL(str(_BASE_URL)),
+            link=rss.URL(str(fetch.BASE_URL)),
         ),
         description="Essential Reading For Engineering Leaders",
         last_build_date=datetime.datetime.now(tz=datetime.UTC),
@@ -134,7 +117,7 @@ async def _entry_to_rss_item(
     html = await fetch.fetch_archive_html(client=client, href=entry.href, cache_dir=cache_dir)
     return rss.Item(
         title=entry.title,
-        link=rss.URL(str(_BASE_URL.join(entry.href))),
+        link=rss.URL(str(fetch.BASE_URL.join(entry.href))),
         pub_date=entry.published_at,
         description=cleanup.html_to_description(html),
     )
