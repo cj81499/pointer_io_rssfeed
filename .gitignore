@@ -12,5 +12,5 @@ wheels/
 # Caches
 .*cache*/
 
-# Generated RSS feed
-feed.xml
+# Generated RSS feed(s)
+feed*.xml

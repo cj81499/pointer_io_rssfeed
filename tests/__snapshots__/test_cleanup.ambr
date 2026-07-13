@@ -3,49 +3,6 @@
   '''
   <div>
    <p>
-    <a href="https://hookdeck.com/?ref=pointer-489">
-     <strong>
-      Asynchronous Messaging Platform For Engineering Teams
-     </strong>
-    </a>
-   </p>
-   <p>
-    <br/>
-   </p>
-   <p>
-    <a href="https://hookdeck.com/?ref=pointer-489">
-     Hookdeck
-    </a>
-    is an Event Gateway: A platform offering asynchronous messaging infrastructure and developer tooling for your full software development lifecycle.
-   </p>
-   <p>
-    <br/>
-   </p>
-   <p>
-    Our platform is an alternative component in your event-driven architecture to Amazon EventBridge, Azure EventGrid, Google EventArc, or hosted Kafka.
-   </p>
-   <p>
-    <br/>
-   </p>
-   <p>
-    With
-    <a href="https://hookdeck.com/?ref=pointer-489">
-     Hookdeck
-    </a>
-    you can reliably receive, verify, transform, filter, route, rate limit, deliver, retry, and, observe messages at scale.
-   </p>
-  </div>
-  <div>
-   <p>
-    <a href="https://hookdeck.com/?ref=pointer-489">
-     <strong>
-      Try Hookdeck For Free
-     </strong>
-    </a>
-   </p>
-  </div>
-  <div>
-   <p>
     <a href="https://tidyfirst.substack.com/p/the-pleasure-of-pattern">
      <strong>
       The Pleasure Of Pattern
@@ -371,12 +328,6 @@
 # ---
 # name: test_html_to_description[ee9c973edf.html]
   '''
-  <div>
-   A Reading Club For Software Developers -
-   <a href="https://www.pointer.io/">
-    Sign Up Here
-   </a>
-  </div>
   <div>
    <a href="https://overreacted.io/goodbye-clean-code/">
     <strong>
@@ -822,20 +773,6 @@
    </i>
   </h6>
   <h1>
-   Most Popular From Last Issue
-  </h1>
-  <p>
-   <b>
-    <a href="https://luminousmen.substack.com/p/drunk-post-things-ive-learned-as">
-     Drunk Post: Things I’ve Learned As A Senior Engineer
-    </a>
-   </b>
-   -
-   <b>
-   </b>
-   Kirill Bobrov
-  </p>
-  <h1>
    Notable Links
   </h1>
   <p>
@@ -1025,6 +962,7 @@
   <h2>
    Null Pointer
   </h2>
+  <img src="https://media.beehiiv.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,quality=80/uploads/asset/file/92d5338d-8048-44c4-8b17-a61e7248dd5f/37_uber-legacy.png?t=1770919976"/>
   <p>
    Uber-legacy
   </p>
@@ -1033,21 +971,6 @@
    <a href="https://ma.nu/graphics/">
     Manu
    </a>
-   . Got an idea for a cartoon? Click reply and let us know
-  </p>
-  <h2>
-   Most Popular From Last Issue
-  </h2>
-  <p>
-   <b>
-    <a href="https://justoffbyone.com/posts/how-to-run-11s">
-     Running 1:1s For Engineers
-    </a>
-   </b>
-   -
-   <b>
-   </b>
-   Can Duruk
   </p>
   <h2>
    Notable Links
