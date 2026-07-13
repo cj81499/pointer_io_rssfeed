@@ -14,7 +14,9 @@ Each RSS item includes:
 - the issue title (e.g. "Issue #691")
 - a link to the archive page
 - the publication date
-- a `<description>` containing HTML from the archive page
+- a clean, RSS-reader-friendly `<description>` containing the editorial HTML
+  from the archive page (without email CSS, layout tables, ads, or feedback
+  controls)
 
 The generator fetches archive pages concurrently (bounded by `--max-concurrency`) and caches
 fetched HTML in a local directory so subsequent runs avoid re-downloading the same pages.

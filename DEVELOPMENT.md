@@ -22,13 +22,18 @@ re-downloading the same pages.
 
 ## Project layout
 
-- `src/pointer_io_rssfeed/__init__.py` — CLI entrypoint: scrapes the archive
-  index, fetches article pages concurrently, and assembles the RSS feed.
+- `src/pointer_io_rssfeed/cli.py` — CLI entrypoint and concurrent feed
+  orchestration.
+- `src/pointer_io_rssfeed/archive.py` — archive-index parsing into typed issue
+  metadata.
+- `src/pointer_io_rssfeed/fetch.py` — read-through filesystem cache for archive
+  pages.
 - `src/pointer_io_rssfeed/cleanup.py` — `html_to_description(html)`, where the
   article-HTML cleanup rules live and grow (stripping ads, the presenter
   header, the "Notable links" tail, etc.).
-- `src/pointer_io_rssfeed/rss.py` — `attrs` data classes that serialize to RSS
-  2.0 XML.
+- `src/pointer_io_rssfeed/render.py` — readable XML serialization, CDATA, and
+  HTML formatting for feed descriptions.
+- `src/pointer_io_rssfeed/rss.py` — `attrs` data classes that model RSS 2.0.
 
 ## Testing
 
