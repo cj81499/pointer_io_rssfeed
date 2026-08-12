@@ -251,8 +251,10 @@ def test_html_to_description_keeps_project_uno_article_attribution() -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "Share top quality programming content with the rest of the community "
-        "using the Pointer bookmarklet. Gimme the Bookmarklet",
+        (
+            "Share top quality programming content with the rest of the community "
+            "using the Pointer bookmarklet. Gimme the Bookmarklet"
+        ),
         "Any and all feedback on Pointer is welcome. Don't be a stranger!",
         "A Reading Club For Software Developers — Sign Up Here",
         "If you're interested in sponsoring Pointer, here's more info or feel free to click reply.",
@@ -286,8 +288,10 @@ def test_html_to_description_keeps_project_uno_article_attribution() -> None:
         "I'm working on a project to better understand how people connect movement with emotions. Here's a survey.",
         "Follow Pointer on RSS: https://www.pointer.io/rss/",
         "Notable Event Frontier Tech Week Sign Up Now - Use code POINTER$50OFF to save $50",
-        "Editorial Note: I'm looking for software engineers who are currently managing or leading a team "
-        "to answer one question over email. If you are interested, click reply.",
+        (
+            "Editorial Note: I'm looking for software engineers who are currently managing or leading a team "
+            "to answer one question over email. If you are interested, click reply."
+        ),
         "Sign-up for Pointer here",
         "The best startup engineering jobs in NY",
         "Want to connect with 200+ startups? Submit your resume.",
