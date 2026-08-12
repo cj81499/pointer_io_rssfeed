@@ -46,6 +46,7 @@ select = ["ALL"]
 ignore = [
   "D",
   "COM812",  # conflicts w/ formatter
+  "CPY",  # no copyright headers in this repo
   "S101",  # defensive assert is good!
   # Allow TODO comments
   "FIX002",
