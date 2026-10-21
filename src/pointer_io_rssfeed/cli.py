@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import enum
 import logging
 import logging.config
@@ -103,7 +103,7 @@ async def _generate_feed(max_concurrency: int, cache_dir: trio.Path) -> None:
             link=rss.URL(str(fetch.BASE_URL)),
         ),
         description="Essential Reading For Engineering Leaders",
-        last_build_date=datetime.datetime.now(tz=datetime.UTC),
+        last_build_date=dt.datetime.now(tz=dt.UTC),
         items=sorted(rss_items, key=_item_pub_date),
     )
 
@@ -123,7 +123,7 @@ async def _entry_to_rss_item(
     )
 
 
-def _item_pub_date(item: rss.Item) -> datetime.datetime:
+def _item_pub_date(item: rss.Item) -> dt.datetime:
     assert item.pub_date is not None
     return item.pub_date
 
