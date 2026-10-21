@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import zoneinfo
 
 from pointer_io_rssfeed import archive
@@ -20,11 +20,11 @@ def test_parse_entries_extracts_only_archive_articles() -> None:
         archive.ArchiveEntry(
             title="Issue #1",
             href="/archives/abc123",
-            published_at=datetime.datetime(2026, 5, 5, 9, tzinfo=zoneinfo.ZoneInfo("America/New_York")),
+            published_at=dt.datetime(2026, 5, 5, 9, tzinfo=zoneinfo.ZoneInfo("America/New_York")),
         ),
         archive.ArchiveEntry(
             title="Issue #2",
             href="/archives/def456/",
-            published_at=datetime.datetime(2026, 5, 8, 9, tzinfo=zoneinfo.ZoneInfo("America/New_York")),
+            published_at=dt.datetime(2026, 5, 8, 9, tzinfo=zoneinfo.ZoneInfo("America/New_York")),
         ),
     ]

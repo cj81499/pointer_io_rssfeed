@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, NewType, Protocol
 import attrs
 
 if TYPE_CHECKING:
-    import datetime
+    import datetime as dt
 
 URL = NewType("URL", str)
 
@@ -43,7 +43,7 @@ class Item(_SupportsToXml):
     # comments
     # enclosure
     # guid
-    pub_date: datetime.datetime | None = None
+    pub_date: dt.datetime | None = None
     # source
 
     def __attrs_post_init__(self) -> None:
@@ -74,8 +74,8 @@ class Feed(_SupportsToXml):
     # copyright
     # managingEditor
     # webMaster
-    pub_date: datetime.datetime | None = None
-    last_build_date: datetime.datetime | None = None
+    pub_date: dt.datetime | None = None
+    last_build_date: dt.datetime | None = None
     # category
     # generator
     docs: URL | None = _DEFAULT_DOCS_URL
